@@ -1,27 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Preview Output · ACA AI Mapping{% endblock %}
 {% block content %}
-<section class="card">
-  <div class="step-head"><span>03</span><div><h1>Preview Output ACA Desktop</h1><p>{{ total }} baris akan ditulis ke template Sales Invoice.</p></div></div>
-  {% if saved_id %}<div class="alert ok">Mapping profile berhasil disimpan dengan ID {{ saved_id }}.</div>{% endif %}
-  {% if issues %}
-    <div class="alert danger"><strong>Belum lolos validasi.</strong> Ada {{ issues|length }} masalah pada field minimum MVP.</div>
-    <div class="issue-list">{% for issue in issues[:30] %}<div>{{ issue }}</div>{% endfor %}</div>
-  {% else %}
-    <div class="alert ok"><strong>Validasi minimum lolos.</strong> File siap dibuat dalam format ACA Desktop.</div>
-  {% endif %}
-</section>
-
-<section class="card">
-  <h2>Preview 20 baris</h2>
-  <div class="table-wrap"><table><thead><tr>{% for h in visible_targets %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr>{% for h in visible_targets %}<td>{{ row.get(h,'') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
-  <div class="actions">
-    <a class="btn ghost" href="/">Mulai Ulang</a>
-    <form action="/download" method="post">
-      <input type="hidden" name="token" value="{{ token }}">
-      <input type="hidden" name="mapping_blob" value='{{ mapping_blob|e }}'>
-      <button class="btn primary" type="submit" {% if issues %}disabled{% endif %}>Download Excel ACA Desktop</button>
-    </form>
-  </div>
-</section>
+<section class="card"><div class="step-head"><span>05</span><div><h1>Preview Hasil</h1><p>{{ total }} baris sumber akan ditulis ke template <strong>{{ target_filename }}</strong>.</p></div></div>{% if saved_id %}<div class="alert ok">Mapping disimpan dengan ID {{ saved_id }}.</div>{% endif %}{% if issues %}<div class="alert danger"><strong>Perlu diperbaiki.</strong> {{ issues|length }} masalah ditemukan.</div>{% else %}<div class="alert ok"><strong>Siap dibuat.</strong> {{ mapped_count }} dari {{ target_count }} target column memiliki rule mapping/konstanta.</div>{% endif %}</section>
+<section class="card"><h2>Preview 20 baris</h2>{% if visible_targets %}<div class="table-wrap"><table><thead><tr>{% for h in visible_targets %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr>{% for h in visible_targets %}<td>{{ row.get(h,'') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}<div class="actions"><a class="btn ghost" href="/">Mulai Ulang</a><form action="/download" method="post"><input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="mapping_blob" value='{{ mapping_blob|e }}'><button class="btn primary" type="submit" {% if issues %}disabled{% endif %}>Download Excel Sesuai Format ACA</button></form></div></section>
 {% endblock %}

@@ -1,163 +1,54 @@
-# ACA AI Mapping — ACA Desktop Sales Invoice MVP
+# ACA AI Mapping — Flexible Excel Mapper
 
-Aplikasi web untuk mengubah **Excel customer** menjadi **template Excel Sales Invoice ACA Accurate Desktop**.
+MVP untuk mengubah Excel sumber/customer agar mengikuti **format Excel ACA yang di-upload user**.
 
-Prinsip desain:
+## Flow
+1. Upload **Format Excel ACA Default** (.xlsx/.xlsm).
+2. Upload **Excel Data Sumber**.
+3. Klik **Jalankan Mapping**.
+4. AI membaca header + sample source dan header + sample target.
+5. Review/koreksi mapping.
+6. Preview hasil.
+7. Download output. Workbook target yang di-upload dipakai sebagai dasar sehingga urutan kolom dan style tetap dipertahankan.
 
-1. AI hanya membaca **nama kolom + sample baris** untuk menyarankan mapping.
-2. AI tidak memproses seluruh workbook dan tidak boleh mengarang kode customer/item/master.
-3. Setelah mapping disetujui user, transformasi seluruh data dikerjakan Python secara deterministic.
-4. Output ditulis ke `target_template.xlsx` yang berasal dari template ACA Desktop asli.
+AI hanya menghasilkan aturan mapping. Semua row ditransformasi oleh Python, bukan oleh AI.
 
-## Target template
-
-Sheet: `Data`
-
-Template memiliki 57 kolom, dari `BRANCHCODE` sampai `DPINCLUSIVETAX`.
-
-Field minimum yang divalidasi MVP:
-
-- `INVOICENO`
-- `INVOICEDATE`
-- `CUSTOMERID`
-- `ITEMNO`
-- `QUANTITY`
-- `UNITPRICE`
-
-Daftar ini adalah aturan MVP converter dan dapat diubah di `schemas/aca_desktop_sales_invoice.json` tanpa mengubah engine.
-
-## Fitur
-
-- Upload `.xlsx` / `.xlsm`
-- OpenAI / ChatGPT mapping
-- DeepSeek mapping
-- Fallback heuristic tanpa AI
-- Review dan edit mapping manual
-- Constant value per target field
-- Preview hasil 20 baris
-- Validasi field minimum
-- Simpan mapping profile ke SQLite
-- Download Excel hasil menggunakan template ACA Desktop
-- Arsitektur schema-based agar nanti mudah menambah Purchase Invoice, Journal Voucher, dll.
-
-## Menjalankan lokal
-
-```bash
-python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-cp .env.example .env
-python app.py
-```
-
-Buka `http://localhost:8080`.
-
-## Integrasi OpenAI / ChatGPT API
-
-Buat API key OpenAI lalu isi:
-
+## OpenAI GPT-6 Luna
+Railway Variables:
 ```env
+SECRET_KEY=your-long-secret
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.5
+OPENAI_MODEL=gpt-6-luna
+OPENAI_REASONING_EFFORT=low
+MAX_SAMPLE_ROWS=20
+MAX_UPLOAD_MB=25
 ```
 
-Aplikasi menggunakan official Python SDK dan **Responses API**. Provider hanya menerima header target, header source, dan sample data (default 20 baris), bukan seluruh Excel.
-
-Model dapat diganti lewat environment variable tanpa mengubah source code.
-
-## Integrasi DeepSeek
-
-Isi:
-
+## DeepSeek
 ```env
 AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=...
-DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_MODEL=deepseek-chat
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 ```
 
-DeepSeek menyediakan API yang kompatibel dengan OpenAI SDK. Source memakai SDK `openai` yang sama dengan `base_url` DeepSeek.
-
 ## Tanpa AI
-
-Untuk testing tanpa biaya API:
-
 ```env
 AI_PROVIDER=heuristic
 ```
 
-Aplikasi melakukan header matching sederhana. Mapping tetap bisa diperbaiki manual di UI.
-
 ## Railway
-
-Upload project ini ke GitHub, lalu deploy repository ke Railway.
-
-Variables minimum:
-
-```env
-SECRET_KEY=ganti-dengan-random-secret
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.5
-MAX_SAMPLE_ROWS=20
-MAX_UPLOAD_MB=25
-```
-
-atau DeepSeek:
-
-```env
-SECRET_KEY=ganti-dengan-random-secret
-AI_PROVIDER=deepseek
-DEEPSEEK_API_KEY=...
-DEEPSEEK_MODEL=deepseek-flash
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-MAX_SAMPLE_ROWS=20
-MAX_UPLOAD_MB=25
-```
-
 Start command:
-
 ```bash
 gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120
 ```
 
-`Procfile` sudah disediakan.
+## Catatan template ACA
+- Header target diasumsikan berada di baris pertama sheet pertama.
+- Output mempertahankan workbook target, sheet, urutan kolom, width/style/formula/header lain sejauh tidak berada pada data rows yang diganti.
+- Row 2 dipakai sebagai style sample untuk data hasil mapping.
+- Jika template target berisi contoh data, data dari row 2 ke bawah akan dihapus ketika output dibuat.
 
-## Flow aplikasi
-
-```text
-Excel Customer
-   ↓
-Read header + sample 20 row
-   ↓
-AI / heuristic mapping
-   ↓
-User review/edit mapping
-   ↓
-Python deterministic transform
-   ↓
-Validation
-   ↓
-Write ke target_template.xlsx
-   ↓
-Download ACA_Desktop_Sales_Invoice.xlsx
-```
-
-## Security / privacy notes
-
-- Jangan commit `.env` atau API key ke GitHub.
-- Pada desain ini, AI hanya menerima sample baris. Jika data customer sensitif, kurangi `MAX_SAMPLE_ROWS`, gunakan data masking, atau gunakan provider/region yang sesuai kebijakan perusahaan.
-- File upload pada MVP disimpan di storage lokal/ephemeral. Untuk produksi multi-user, pindahkan file ke object storage dan tambahkan lifecycle deletion.
-- SQLite cocok untuk MVP. Untuk production multi-instance, pindahkan mapping profile ke PostgreSQL.
-
-## Menambah modul baru
-
-Engine sudah dipisahkan menjadi:
-
-- `schemas/` — definisi target template
-- `services/ai_service.py` — provider AI
-- `services/excel_service.py` — deterministic transformer
-- `services/storage_service.py` — saved mapping
-
-Untuk modul baru, buat schema + template target dan kemudian generalisasi routing agar user dapat memilih platform/module.
+## Pengembangan berikutnya
+Engine ini sudah tidak hard-coded ke 57 field Sales Invoice, sehingga dapat dipakai sebagai dasar untuk modul ACA Desktop lain dengan cara cukup upload target template yang berbeda. Untuk production berikutnya disarankan menambah: pemilihan sheet, multi-row header, transformation rules, lookup master, dan mapping profile berdasarkan signature target + source.

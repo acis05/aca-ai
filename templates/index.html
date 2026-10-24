@@ -1,64 +1,13 @@
 {% extends "base.html" %}
-{% block title %}ACA AI Mapping · Sales Invoice{% endblock %}
+{% block title %}ACA AI Mapping · Flexible Excel Mapper{% endblock %}
 {% block content %}
-<section class="hero card">
-  <div>
-    <div class="eyebrow">MVP · ACA Desktop</div>
-    <h1>Ubah Excel customer menjadi format Sales Invoice ACA.</h1>
-    <p>AI hanya membaca header dan beberapa contoh baris untuk membuat mapping. Seluruh data kemudian ditransformasi oleh backend secara deterministic.</p>
-  </div>
-  <div class="hero-flow">
-    <span>Upload</span><b>→</b><span>AI Mapping</span><b>→</b><span>Preview</span><b>→</b><span>Download ACA</span>
-  </div>
-</section>
-
+<section class="hero card"><div><div class="eyebrow">ACA AI Mapping · Flexible Mode</div><h1>Upload format ACA + data sumber. AI menyesuaikan keduanya.</h1><p>Tidak ada target kolom yang dikunci di source code. Format output mengikuti Excel ACA Default yang kamu upload saat itu.</p></div><div class="hero-flow"><span>Target ACA</span><b>+</b><span>Data Sumber</span><b>→</b><span>AI Mapping</span><b>→</b><span>Download</span></div></section>
+<form action="/analyze" method="post" enctype="multipart/form-data">
 <section class="grid2">
-  <section class="card">
-    <div class="step-head"><span>01</span><div><h2>Upload Excel Customer</h2><p>Baris pertama harus berisi nama kolom.</p></div></div>
-    <form action="/analyze" method="post" enctype="multipart/form-data" class="form-stack">
-      <label class="upload-box">
-        <input type="file" name="file" accept=".xlsx,.xlsm" required>
-        <strong>Pilih file Excel customer</strong>
-        <small>.xlsx atau .xlsm · maksimum {{ config.MAX_CONTENT_LENGTH // 1024 // 1024 }} MB</small>
-      </label>
-
-      <div class="field">
-        <label>AI Provider</label>
-        <select name="provider">
-          <option value="openai" {% if default_provider=='openai' %}selected{% endif %}>OpenAI / ChatGPT API</option>
-          <option value="deepseek" {% if default_provider=='deepseek' %}selected{% endif %}>DeepSeek API</option>
-          <option value="heuristic" {% if default_provider=='heuristic' %}selected{% endif %}>Tanpa AI · Heuristic</option>
-        </select>
-        <small>Jika API key belum tersedia atau provider error, aplikasi otomatis fallback ke heuristic mapping.</small>
-      </div>
-
-      <button class="btn primary" type="submit">Analisa & Buat Mapping</button>
-    </form>
-  </section>
-
-  <section class="card">
-    <div class="step-head"><span>02</span><div><h2>Target Format</h2><p>Template ini berasal dari file ACA Desktop yang kamu berikan.</p></div></div>
-    <div class="target-list">
-      <div><span>Platform</span><strong>{{ schema.platform }}</strong></div>
-      <div><span>Module</span><strong>{{ schema.module }}</strong></div>
-      <div><span>Sheet</span><strong>{{ schema.sheet_name }}</strong></div>
-      <div><span>Jumlah kolom</span><strong>{{ schema.target_columns|length }}</strong></div>
-    </div>
-    <div class="required-box">
-      <span>Field minimum MVP</span>
-      <div class="chips">{% for x in schema.required_targets %}<b>{{ x }}</b>{% endfor %}</div>
-    </div>
-  </section>
+<section class="card"><div class="step-head"><span>01</span><div><h2>Format Excel ACA Default</h2><p>Upload template kosong / contoh format ACA yang menjadi target output.</p></div></div><label class="upload-box"><input type="file" name="target_file" accept=".xlsx,.xlsm" required><strong>Pilih format Excel ACA</strong><small>Header baris pertama akan menjadi struktur target.</small></label></section>
+<section class="card"><div class="step-head"><span>02</span><div><h2>Excel Data Sumber</h2><p>Upload file customer/internal yang format kolomnya ingin disesuaikan.</p></div></div><label class="upload-box"><input type="file" name="source_file" accept=".xlsx,.xlsm" required><strong>Pilih Excel sumber</strong><small>AI akan membaca header + sample row saja.</small></label></section>
 </section>
-
-{% if profiles %}
-<section class="card">
-  <div class="step-head"><span>03</span><div><h2>Saved Mapping Profiles</h2><p>Mapping yang pernah disimpan untuk pengembangan berikutnya.</p></div></div>
-  <div class="profile-table">
-    {% for p in profiles %}
-    <div class="profile-row"><strong>{{ p.name }}</strong><span>{{ p.platform }} · {{ p.module }}</span><code>{{ p.source_signature }}</code><small>{{ p.created_at }}</small></div>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
+<section class="card"><div class="step-head"><span>03</span><div><h2>Jalankan Mapping</h2><p>Pilih provider. GPT-6 Luna direkomendasikan untuk workflow ini.</p></div></div><div class="form-stack"><div class="field"><label>AI Provider</label><select name="provider"><option value="openai" {% if default_provider=='openai' %}selected{% endif %}>OpenAI · GPT-6 Luna</option><option value="deepseek" {% if default_provider=='deepseek' %}selected{% endif %}>DeepSeek</option><option value="heuristic" {% if default_provider=='heuristic' %}selected{% endif %}>Tanpa AI · Heuristic</option></select><small>Kalau API error, aplikasi otomatis fallback ke heuristic.</small></div><button class="btn primary" type="submit">Jalankan Mapping</button></div></section>
+</form>
+{% if profiles %}<section class="card"><h2>Saved Mapping Profiles</h2><div class="profile-table">{% for p in profiles %}<div class="profile-row"><strong>{{ p.name }}</strong><span>{{ p.platform }} · {{ p.module }}</span><code>{{ p.source_signature }}</code><small>{{ p.created_at }}</small></div>{% endfor %}</div></section>{% endif %}
 {% endblock %}
