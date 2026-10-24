@@ -35,15 +35,68 @@ def inspect_workbook(path: str | Path, sample_rows: int = 20):
 def inspect_source(path, sample_rows=20): return inspect_workbook(path,sample_rows)
 
 
+def _rgb_from_fill(cell):
+    """Return ARGB/RGB string for solid header fills when available."""
+    fill = cell.fill
+    if not fill or fill.fill_type != 'solid':
+        return None
+    color = fill.fgColor
+    if color.type == 'rgb' and color.rgb:
+        return str(color.rgb).upper()
+    if color.type == 'indexed' and color.indexed is not None:
+        # Excel indexed color 6 is standard yellow.
+        if int(color.indexed) == 6:
+            return 'FFFFFF00'
+    return None
+
+
+def _is_required_yellow(cell):
+    """Treat a yellow-ish solid header fill as the user's required-column marker.
+
+    Handles common Excel yellows such as #FFFF00, #FFC000 and pale yellow #FFF2CC.
+    We intentionally do not treat green/orange/etc. as required.
+    """
+    rgb = _rgb_from_fill(cell)
+    if not rgb:
+        return False
+    hex6 = rgb[-6:]
+    try:
+        r, g, b = int(hex6[0:2], 16), int(hex6[2:4], 16), int(hex6[4:6], 16)
+    except ValueError:
+        return False
+    return r >= 220 and g >= 170 and b <= 220 and min(r, g) - b >= 25
+
+
 def build_dynamic_schema(target_path: str | Path, sample_rows: int = 5):
     headers,samples,sheet=inspect_workbook(target_path,sample_rows)
+
+    # Re-open normally because read_only mode is not reliable for style/fill inspection.
+    style_wb = load_workbook(target_path, read_only=False, data_only=True)
+    style_ws = style_wb[sheet]
+    target_columns=[]
+    required=[]
+    for idx,h in enumerate(headers, start=1):
+        if not h:
+            continue
+        cell=style_ws.cell(1, idx)
+        is_required=_is_required_yellow(cell)
+        if is_required:
+            required.append(h)
+        target_columns.append({
+            'name':h,
+            'description':_describe_target(h,samples),
+            'required':is_required,
+            'header_fill':_rgb_from_fill(cell),
+        })
+    style_wb.close()
+
     return {
         'platform':'ACA Desktop',
         'module':'Dynamic Excel Mapping',
         'sheet_name':sheet,
         'template_file':str(target_path),
-        'target_columns':[{'name':h,'description':_describe_target(h,samples)} for h in headers if h],
-        'required_targets':[],
+        'target_columns':target_columns,
+        'required_targets':required,
         'normalizers':_infer_normalizers(headers),
         'target_samples':samples,
     }
@@ -110,14 +163,34 @@ def convert_rows(source_rows:list[dict], mapping:dict, schema:dict):
     return output
 
 
-def validate_output(rows:list[dict], schema:dict):
+def validate_output(rows:list[dict], schema:dict, mapping:dict | None = None):
     issues=[]
     mapped=set()
     for row in rows:
         for k,v in row.items():
             if v not in (None,''): mapped.add(k)
-    if not mapped: issues.append('Belum ada kolom target yang terisi. Periksa mapping.')
-    if rows and all(all(v in (None,'') for v in r.values()) for r in rows): issues.append('Semua hasil mapping kosong.')
+    if not mapped:
+        issues.append('Belum ada kolom target yang terisi. Periksa mapping.')
+    if rows and all(all(v in (None,'') for v in r.values()) for r in rows):
+        issues.append('Semua hasil mapping kosong.')
+
+    required=list(schema.get('required_targets') or [])
+    if required:
+        if mapping is not None:
+            rules=mapping.get('target_rules',{})
+            missing_rules=[t for t in required if t not in rules]
+            if missing_rules:
+                issues.append('Kolom wajib target belum dipetakan/diisi konstanta: ' + ', '.join(missing_rules))
+
+        missing_values={}
+        for idx,row in enumerate(rows, start=2):
+            for target in required:
+                if row.get(target) in (None,''):
+                    missing_values.setdefault(target,[]).append(idx)
+        for target,row_numbers in missing_values.items():
+            shown=', '.join(map(str,row_numbers[:8]))
+            suffix=' ...' if len(row_numbers)>8 else ''
+            issues.append(f'Kolom wajib {target} kosong pada baris output: {shown}{suffix}')
     return issues
 
 

@@ -52,3 +52,13 @@ gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120
 
 ## Pengembangan berikutnya
 Engine ini sudah tidak hard-coded ke 57 field Sales Invoice, sehingga dapat dipakai sebagai dasar untuk modul ACA Desktop lain dengan cara cukup upload target template yang berbeda. Untuk production berikutnya disarankan menambah: pemilihan sheet, multi-row header, transformation rules, lookup master, dan mapping profile berdasarkan signature target + source.
+
+## Required columns from yellow header
+
+Pada Excel target ACA, beri **fill kuning** pada cell header baris pertama untuk menandai kolom wajib. ACA AI Mapping akan:
+
+- menandai target tersebut sebagai **WAJIB** di halaman mapping,
+- mewarnai baris target dengan aksen kuning,
+- memblokir download bila kolom wajib belum memiliki mapping/konstanta, atau hasilnya kosong.
+
+Warna kuning umum Excel seperti `#FFFF00`, `#FFC000`, dan `#FFF2CC` didukung.

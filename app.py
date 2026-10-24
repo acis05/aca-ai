@@ -55,7 +55,7 @@ def preview():
     token=request.form.get('token',''); spath=file_token_path(token,'source'); tpath=file_token_path(token,'target')
     if not spath or not tpath: return 'File upload sudah tidak tersedia. Upload ulang.',404
     schema=build_dynamic_schema(tpath,5); mapping=mapping_from_form(request.form,schema)
-    headers,rows=read_source_rows(spath); converted=convert_rows(rows,mapping,schema); issues=validate_output(converted,schema)
+    headers,rows=read_source_rows(spath); converted=convert_rows(rows,mapping,schema); issues=validate_output(converted,schema,mapping)
     profile=(request.form.get('profile_name') or '').strip(); saved_id=None
     if profile: saved_id=save_profile(profile,signature(headers),mapping,{'platform':'ACA Desktop','module':'Dynamic Template'})
     preview_rows=converted[:20]; visible=[x['name'] for x in schema['target_columns'] if any(r.get(x['name']) not in (None,'') for r in preview_rows)]
@@ -65,7 +65,7 @@ def preview():
 def download():
     token=request.form.get('token',''); spath=file_token_path(token,'source'); tpath=file_token_path(token,'target')
     if not spath or not tpath: return 'File upload sudah tidak tersedia. Upload ulang.',404
-    schema=build_dynamic_schema(tpath,5); mapping=json.loads(request.form.get('mapping_blob') or '{}'); _,rows=read_source_rows(spath); converted=convert_rows(rows,mapping,schema); issues=validate_output(converted,schema)
+    schema=build_dynamic_schema(tpath,5); mapping=json.loads(request.form.get('mapping_blob') or '{}'); _,rows=read_source_rows(spath); converted=convert_rows(rows,mapping,schema); issues=validate_output(converted,schema,mapping)
     if issues: return render_template('error.html',title='Belum bisa download',message='Periksa mapping terlebih dahulu.',issues=issues),400
     out=OUTPUT_DIR/f'ACA_Mapped_{uuid.uuid4().hex[:8]}.xlsx'; write_target(tpath,out,converted,schema)
     return send_file(out,as_attachment=True,download_name='ACA_Mapped_Output.xlsx')
