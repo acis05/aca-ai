@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Login · ACA AI Mapping{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <section class="card auth-card">
+    <div class="eyebrow">ACA AI Mapping</div><h1>Masuk ke aplikasi</h1><p class="muted">Gunakan akun yang diberikan admin. Akses mapping aktif sesuai masa langganan.</p>
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+    <form method="post" class="form-stack">
+      <div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <button class="btn primary" type="submit">Masuk</button>
+    </form>
+  </section>
+  <section class="card auth-side"><div class="module-pill">Subscription</div><h2>Mapping Excel lebih cepat, tanpa ubah format manual.</h2><p>Masa aktif akun dikelola admin: 1 bulan, 6 bulan, atau 1 tahun.</p></section>
+</div>
+{% endblock %}

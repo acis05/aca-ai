@@ -62,3 +62,23 @@ Pada Excel target ACA, beri **fill kuning** pada cell header baris pertama untuk
 - memblokir download bila kolom wajib belum memiliki mapping/konstanta, atau hasilnya kosong.
 
 Warna kuning umum Excel seperti `#FFFF00`, `#FFC000`, dan `#FFF2CC` didukung.
+
+## Login + Subscription Admin
+
+Versi ini memiliki autentikasi dan manual subscription management.
+
+### Admin bootstrap
+Set Railway Variables:
+
+```env
+ADMIN_NAME=ACA Admin
+ADMIN_EMAIL=admin@domain.com
+ADMIN_PASSWORD=password-admin-yang-kuat
+```
+
+Admin pertama dibuat otomatis saat aplikasi start jika email tersebut belum ada.
+
+### Database
+Untuk production Railway disarankan menambahkan PostgreSQL dan mengisi `DATABASE_URL` dari Railway. Jika kosong, aplikasi fallback ke SQLite lokal (cocok untuk development, tidak ideal untuk production Railway tanpa persistent volume).
+
+Admin dapat membuat user dengan masa aktif 1 bulan, 6 bulan, atau 1 tahun; memperpanjang masa aktif; menonaktifkan akun; dan reset password. Semua route mapping, preview, dan download memerlukan akun dengan subscription aktif.

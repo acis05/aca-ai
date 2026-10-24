@@ -1,21 +1,23 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}ACA AI Mapping{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-dot"></span><div><strong>ACA AI Mapping</strong><small>Excel Customer → ACA Desktop</small></div></div>
-    <div class="module-pill">Sales Invoice MVP</div>
+    <div class="brand"><span class="brand-dot"></span><div><strong>ACA AI Mapping</strong><small>Excel Customer → Format ACA</small></div></div>
+    <div class="top-actions">
+      {% if current_user %}<span class="user-chip">{{ current_user.name }}{% if not current_user.is_admin %} · aktif s/d {{ current_user.active_until.strftime('%d/%m/%Y') if current_user.active_until else '-' }}{% endif %}</span>{% endif %}
+      {% if current_user and current_user.is_admin %}<a class="btn ghost small" href="/admin">Admin</a>{% endif %}
+      {% if current_user %}<a class="btn ghost small" href="/logout">Keluar</a>{% endif %}
+    </div>
   </header>
-  <main class="page">{% block content %}{% endblock %}</main>
-  <footer class="footer">ACA AI Mapping · deterministic Excel transformer · AI hanya untuk mapping</footer>
+  <main class="page">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="alert {{ 'ok' if cat=='ok' else 'danger' }}">{{ msg }}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main>
+  <footer class="footer">ACA AI Mapping · subscription access · AI-assisted deterministic transformer</footer>
   {% block scripts %}{% endblock %}
 </body>
 </html>
