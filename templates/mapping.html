@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Review Mapping · ACA AI Mapping{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="step-head"><span>02</span><div><h1>Review Mapping</h1><p>{{ filename }} · Sheet {{ source_sheet }} · signature {{ signature }}</p></div></div>
+  {% if ai_error %}<div class="alert warn"><strong>AI provider tidak dapat digunakan.</strong><br>{{ ai_error }}<br>Aplikasi memakai heuristic fallback.</div>{% endif %}
+  <div class="alert info">Provider mapping: <strong>{{ mapping.provider }}</strong>. AI tidak mengubah data; kamu tetap menyetujui mapping sebelum transformasi.</div>
+</section>
+
+<form action="/preview" method="post">
+<input type="hidden" name="token" value="{{ token }}">
+<section class="card">
+  <div class="mapping-toolbar">
+    <div><h2>Mapping Target ACA Desktop</h2><p>Pilih kolom source atau isi konstanta. Kosongkan bila target tidak digunakan.</p></div>
+    <div class="field compact"><label>Nama mapping (opsional)</label><input name="profile_name" placeholder="Contoh: PT ABC - Sales Invoice"></div>
+  </div>
+  <div class="mapping-table">
+    <div class="mapping-row mapping-header"><span>Target ACA</span><span>Source Customer</span><span>Konstanta</span><span>AI confidence</span></div>
+    {% for col in schema.target_columns %}
+      {% set rule = mapping.target_rules.get(col.name, {}) %}
+      <div class="mapping-row {% if col.name in schema.required_targets %}required{% endif %}">
+        <div class="target-name"><strong>{{ col.name }}</strong><small>{{ col.description }}</small>{% if col.name in schema.required_targets %}<em>minimum MVP</em>{% endif %}</div>
+        <div>
+          <select name="map__{{ col.name }}">
+            <option value="">— tidak dipetakan —</option>
+            {% for h in headers %}<option value="{{ h }}" {% if rule.source==h %}selected{% endif %}>{{ h }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><input name="const__{{ col.name }}" placeholder="opsional"></div>
+        <div class="confidence">{% if rule %}<b>{{ '%.0f'|format((rule.confidence or 0)*100) }}%</b><small>{{ rule.reason }}</small>{% else %}<span>—</span>{% endif %}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if mapping.notes %}
+<section class="card"><h3>Catatan AI / Mapping</h3><ul class="notes">{% for n in mapping.notes %}<li>{{ n }}</li>{% endfor %}</ul></section>
+{% endif %}
+
+<section class="card">
+  <h3>Contoh Data Customer</h3>
+  <div class="table-wrap"><table><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>{% for row in samples %}<tr>{% for h in headers %}<td>{{ row.get(h,'') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+  <div class="actions"><a class="btn ghost" href="/">Kembali</a><button class="btn primary" type="submit">Preview Hasil ACA</button></div>
+</section>
+</form>
+{% endblock %}

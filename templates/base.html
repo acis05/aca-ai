@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ACA AI Mapping{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span><div><strong>ACA AI Mapping</strong><small>Excel Customer → ACA Desktop</small></div></div>
+    <div class="module-pill">Sales Invoice MVP</div>
+  </header>
+  <main class="page">{% block content %}{% endblock %}</main>
+  <footer class="footer">ACA AI Mapping · deterministic Excel transformer · AI hanya untuk mapping</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

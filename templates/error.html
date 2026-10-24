@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card"><h1>{{ title }}</h1><p>{{ message }}</p>{% if issues %}<div class="issue-list">{% for x in issues %}<div>{{ x }}</div>{% endfor %}</div>{% endif %}<a class="btn ghost" href="/">Kembali</a></section>
+{% endblock %}
